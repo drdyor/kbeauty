@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Symptom Tracker Demo</title>
+    <style>
+        :root {
+            --background: 240 10% 12%;
+            --background-elevated: 245 12% 15%;
+            --foreground: 0 0% 98%;
+            --card: 248 12% 17%;
+            --card-elevated: 250 12% 20%;
+            --primary: 185 100% 50%;
+            --primary-hover: 185 100% 55%;
+            --secondary: 315 100% 60%;
+            --accent: 270 100% 65%;
+            --muted: 245 12% 18%;
+            --muted-foreground: 240 5% 55%;
+            --border: 245 12% 22%;
+            --input: 245 12% 16%;
+            --success: 145 100% 50%;
+            --warning: 45 100% 55%;
+            --destructive: 350 100% 55%;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: hsl(var(--primary));
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .symptom-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .symptom-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: hsl(var(--background-elevated));
+            border-radius: 8px;
+            border: 1px solid hsl(var(--border));
+        }
+
+        .symptom-info {
+            flex: 1;
+        }
+
+        .symptom-name {
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            margin-bottom: 0.25rem;
+        }
+
+        .symptom-meta {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .severity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .severity-mild {
+            background: hsl(var(--success) / 0.2);
+            color: hsl(var(--success));
+            border: 1px solid hsl(var(--success) / 0.3);
+        }
+
+        .severity-moderate {
+            background: hsl(var(--warning) / 0.2);
+            color: hsl(var(--warning));
+            border: 1px solid hsl(var(--warning) / 0.3);
+        }
+
+        .severity-severe {
+            background: hsl(var(--destructive) / 0.2);
+            color: hsl(var(--destructive));
+            border: 1px solid hsl(var(--destructive) / 0.3);
+        }
+
+        .pattern-insight {
+            padding: 1rem;
+            background: hsl(var(--background-elevated));
+            border-radius: 8px;
+            border-left: 4px solid hsl(var(--primary));
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-text {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .insight-tag {
+            padding: 0.25rem 0.5rem;
+            background: hsl(var(--primary) / 0.1);
+            color: hsl(var(--primary));
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .medication-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .medication-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .medication-icon {
+            width: 40px;
+            height: 40px;
+            background: hsl(var(--primary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .medication-info h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            margin-bottom: 0.25rem;
+        }
+
+        .medication-info p {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: hsl(var(--background-elevated));
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: hsl(var(--primary));
+            border-radius: 4px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-button {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: hsl(var(--background-elevated));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            text-decoration: none;
+            color: hsl(var(--foreground));
+            transition: all 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: hsl(var(--card));
+            border-color: hsl(var(--primary));
+        }
+
+        .action-icon {
+            margin-right: 0.75rem;
+            color: hsl(var(--primary));
+            font-size: 1.25rem;
+        }
+
+        .action-text h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .action-text p {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Wellness Symptom Tracker</h1>
+            <p class="subtitle">Comprehensive wellness and symptom tracking for better health insights</p>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Today's Entries</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Active Patterns</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">2</div>
+                <div class="stat-label">Medications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">This Week</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid">
+            <!-- Recent Symptoms -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Recent Symptoms</h2>
+                    <p class="card-subtitle">Your latest wellness check-ins</p>
+                </div>
+                <div class="symptom-list">
+                    <div class="symptom-item">
+                        <div class="symptom-info">
+                            <div class="symptom-name">Headache</div>
+                            <div class="symptom-meta">Mental • 2 hours ago</div>
+                        </div>
+                        <span class="severity-badge severity-severe">Severe</span>
+                    </div>
+                    <div class="symptom-item">
+                        <div class="symptom-info">
+                            <div class="symptom-name">Anxiety</div>
+                            <div class="symptom-meta">Mental • 4 hours ago</div>
+                        </div>
+                        <span class="severity-badge severity-moderate">Moderate</span>
+                    </div>
+                    <div class="symptom-item">
+                        <div class="symptom-info">
+                            <div class="symptom-name">Fatigue</div>
+                            <div class="symptom-meta">Physical • 6 hours ago</div>
+                        </div>
+                        <span class="severity-badge severity-mild">Mild</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern Insights -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Pattern Insights</h2>
+                    <p class="card-subtitle">AI-powered wellness discoveries</p>
+                </div>
+                <div class="pattern-insight">
+                    <div class="insight-title">Anxiety peaks with caffeine</div>
+                    <div class="insight-text">Your anxiety levels are 2.3x higher on days with 3+ caffeinated drinks</div>
+                    <div class="insight-tags">
+                        <span class="insight-tag">Correlation</span>
+                        <span class="insight-tag">85% confidence</span>
+                    </div>
+                </div>
+                <div class="pattern-insight">
+                    <div class="insight-title">Headache frequency decreasing</div>
+                    <div class="insight-text">Headache occurrences have dropped 40% over the last 2 weeks</div>
+                    <div class="insight-tags">
+                        <span class="insight-tag">Trend</span>
+                        <span class="insight-tag">Positive</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medications -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Medication Tracking</h2>
+                    <p class="card-subtitle">Monitor effectiveness and side effects</p>
+                </div>
+                <div class="medication-card">
+                    <div class="medication-header">
+                        <div class="medication-icon">💊</div>
+                        <div class="medication-info">
+                            <h3>Sertraline</h3>
+                            <p>50mg • Once daily • Anxiety & depression</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.875rem; color: hsl(var(--muted-foreground));">Adherence</span>
+                            <span style="font-size: 0.875rem; color: hsl(var(--primary)); font-weight: 600;">95%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 95%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.875rem; color: hsl(var(--muted-foreground));">Effectiveness</span>
+                            <span style="font-size: 0.875rem; color: hsl(var(--primary)); font-weight: 600;">7/10</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 70%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Quick Actions</h2>
+                    <p class="card-subtitle">Common wellness tasks</p>
+                </div>
+                <div class="actions-grid">
+                    <a href="#" class="action-button">
+                        <span class="action-icon">⚡</span>
+                        <div class="action-text">
+                            <h3>Log Symptom</h3>
+                            <p>Record a new symptom entry</p>
+                        </div>
+                    </a>
+                    <a href="#" class="action-button">
+                        <span class="action-icon">💊</span>
+                        <div class="action-text">
+                            <h3>Take Medication</h3>
+                            <p>Record medication intake</p>
+                        </div>
+                    </a>
+                    <a href="#" class="action-button">
+                        <span class="action-icon">📊</span>
+                        <div class="action-text">
+                            <h3>View Patterns</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="action-button">
+                        <span class="action-icon">📋</span>
+                        <div class="action-text">
+                            <h3>Generate Report</h3>
+                            <p>Share with healthcare provider</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

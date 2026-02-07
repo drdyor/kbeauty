@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Environment variables (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# iOS/Android build artifacts
+*.ipa
+*.apk
+*.aab
+ios/Pods/
+android/.gradle/
+android/app/build/
+
+# Expo
+.expo/
+.expo-shared/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Large binary/media folders (review before removing from gitignore)
+# koreanbeauty/Wan2.2/  # AI model weights - consider if needed

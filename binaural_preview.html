@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlowChi Binaural Beats - Updated Design</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(180deg, #FFF5F7 0%, #FAE8FF 50%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+
+        .phone {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+
+        .screen {
+            background: linear-gradient(180deg, #FFF5F7 0%, #FAE8FF 50%, #FFFFFF 100%);
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 50px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1F2937;
+            line-height: 34px;
+        }
+
+        .info-card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+
+        .info-content {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .info-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            margin-top: 2px;
+            color: #FF6FAE;
+        }
+
+        .info-text h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1F2937;
+            margin: 0 0 4px 0;
+        }
+
+        .info-text p {
+            font-size: 16px;
+            color: #6B7280;
+            margin: 0;
+            line-height: 22px;
+        }
+
+        .section-label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .brain-states {
+            margin-bottom: 32px;
+        }
+
+        .brain-state {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .brain-state.selected {
+            border-color: #FF6FAE;
+            box-shadow: 0 4px 8px rgba(255, 111, 174, 0.15), 0 2px 4px rgba(255, 111, 174, 0.1);
+        }
+
+        .brain-state-content {
+            text-align: center;
+        }
+
+        .brain-state-icon {
+            font-size: 24px;
+            color: #FF6FAE;
+            margin-bottom: 12px;
+        }
+
+        .brain-state-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 4px;
+        }
+
+        .brain-state.selected .brain-state-name {
+            color: #FF6FAE;
+        }
+
+        .brain-state-freq {
+            font-size: 14px;
+            color: #FF6FAE;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .brain-state-desc {
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        .tracks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .tracks-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1F2937;
+        }
+
+        .unlock-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .unlock-text {
+            font-size: 14px;
+            color: #6B7280;
+            margin-right: 8px;
+        }
+
+        .toggle {
+            width: 36px;
+            height: 20px;
+            background: #E5E7EB;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .toggle-knob {
+            width: 16px;
+            height: 16px;
+            background: #9CA3AF;
+            border-radius: 8px;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .track-card {
+            background: #FFFFFF;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+
+        .track-title-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .track-icon {
+            font-size: 20px;
+            margin-right: 8px;
+            color: #FF6FAE;
+        }
+
+        .track-title {
+            flex: 1;
+            font-size: 16px;
+            color: #1F2937;
+            margin-right: 8px;
+        }
+
+        .track-toggle {
+            width: 32px;
+            height: 18px;
+            background: #FF6FAE;
+            border-radius: 9px;
+            position: relative;
+        }
+
+        .track-toggle .toggle-knob {
+            background: white;
+            left: 14px;
+        }
+
+        .track-subtitle {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 16px;
+        }
+
+        .timeline {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .time {
+            font-size: 14px;
+            color: #6B7280;
+            width: 40px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 24px;
+            margin: 0 8px;
+            position: relative;
+        }
+
+        .waveform {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .wave-bar {
+            width: 2px;
+            height: 12px;
+            background: #E5E7EB;
+            border-radius: 1px;
+        }
+
+        .wave-bar.active {
+            background: #FF6FAE;
+        }
+
+        .progress-indicator {
+            position: absolute;
+            top: 0;
+            left: 15%;
+            width: 12px;
+            height: 12px;
+            background: #FF6FAE;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            transform: translateX(-6px);
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #F3F4F6;
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #6B7280;
+            font-weight: 500;
+            border: 1px solid #E5E7EB;
+        }
+
+        .locked-track {
+            display: flex;
+            align-items: center;
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+            opacity: 0.7;
+        }
+
+        .locked-content {
+            flex: 1;
+        }
+
+        .locked-title {
+            font-size: 16px;
+            color: #9CA3AF;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .locked-subtitle {
+            font-size: 14px;
+            color: #D1D5DB;
+        }
+
+        .locked-icon {
+            font-size: 20px;
+            color: #9CA3AF;
+        }
+
+        .now-playing {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(255, 111, 174, 0.15), 0 2px 4px rgba(255, 111, 174, 0.1);
+        }
+
+        .play-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: #F3F4F6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+        }
+
+        .now-playing-text {
+            flex: 1;
+            font-size: 14px;
+            color: #1F2937;
+            font-weight: 500;
+        }
+
+        .settings-icon {
+            font-size: 20px;
+            color: #FF6FAE;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="screen">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-title">Binaural Beats</div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="info-card">
+                <div class="info-content">
+                    <span class="info-icon">🎧</span>
+                    <div class="info-text">
+                        <h3>Headphones required</h3>
+                        <p>Binaural beats work by delivering slightly different frequencies to each ear. Effect only occurs with stereo headphones — speakers won't produce it.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brain States -->
+            <div class="section-label">Select Brain State</div>
+            <div class="brain-states">
+                <div class="brain-state selected">
+                    <div class="brain-state-content">
+                        <div class="brain-state-icon">🌙</div>
+                        <div class="brain-state-name">Delta</div>
+                        <div class="brain-state-freq">2 Hz</div>
+                        <div class="brain-state-desc">Deep sleep & healing</div>
+                    </div>
+                </div>
+                <div class="brain-state">
+                    <div class="brain-state-content">
+                        <div class="brain-state-icon">🌙</div>
+                        <div class="brain-state-name">Theta</div>
+                        <div class="brain-state-freq">6 Hz</div>
+                        <div class="brain-state-desc">Relaxation & creativity</div>
+                    </div>
+                </div>
+                <div class="brain-state">
+                    <div class="brain-state-content">
+                        <div class="brain-state-icon">🌙</div>
+                        <div class="brain-state-name">Alpha</div>
+                        <div class="brain-state-freq">10 Hz</div>
+                        <div class="brain-state-desc">Calm focus & learning</div>
+                    </div>
+                </div>
+                <div class="brain-state">
+                    <div class="brain-state-content">
+                        <div class="brain-state-icon">🌙</div>
+                        <div class="brain-state-name">Beta</div>
+                        <div class="brain-state-freq">20 Hz</div>
+                        <div class="brain-state-desc">Alert & concentration</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracks Section -->
+            <div class="tracks-header">
+                <div class="tracks-title">Hypnotic Tracks</div>
+                <div class="unlock-row">
+                    <span class="unlock-text">Unlock Premium</span>
+                    <div class="toggle">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Track -->
+            <div class="track-card">
+                <div class="track-title-row">
+                    <span class="track-icon">🌙</span>
+                    <span class="track-title">Delta · 2 Hz — Relaxing Hypnotic Music</span>
+                    <div class="track-toggle">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+
+                <div class="track-subtitle">Play binaural beats alongside this track</div>
+
+                <!-- Timeline -->
+                <div class="timeline">
+                    <span class="time">0:15</span>
+                    <div class="progress-bar">
+                        <div class="waveform">
+                            <div class="wave-bar active"></div>
+                            <div class="wave-bar active"></div>
+                            <div class="wave-bar active"></div>
+                            <div class="wave-bar active"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                        <div class="progress-indicator"></div>
+                    </div>
+                    <span class="time">-9:45</span>
+                </div>
+
+                <!-- Tags -->
+                <div class="tags">
+                    <div class="tag">Delta</div>
+                    <div class="tag">Theta</div>
+                    <div class="tag">Alpha</div>
+                    <div class="tag">Beta</div>
+                    <div class="tag">Schumann</div>
+                </div>
+            </div>
+
+            <!-- Locked Tracks -->
+            <div class="locked-track">
+                <div class="locked-content">
+                    <div class="locked-title">Deep Tranquility</div>
+                    <div class="locked-subtitle">Ultra deep relaxation</div>
+                </div>
+                <span class="locked-icon">🔒</span>
+            </div>
+
+            <div class="locked-track">
+                <div class="locked-content">
+                    <div class="locked-title">Inner Light Journey</div>
+                    <div class="locked-subtitle">Positive affirmations</div>
+                </div>
+                <span class="locked-icon">🔒</span>
+            </div>
+
+            <!-- Now Playing Bar -->
+            <div class="now-playing">
+                <div class="play-button">⏸️</div>
+                <div class="now-playing-text">Now Playing — Delta · 2 Hz</div>
+                <span class="settings-icon">⚙️</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  --glow-pink: #FF6FAE;
+  --glow-rose: #FF5994;
+  --glow-purple: #A855F7;
+  --glow-lavender: #E9D5FF;
+  --glow-bg-soft: #FFF5F7;
+  --glow-bg-mid: #FAE8FF;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+/* Safe area padding for mobile */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

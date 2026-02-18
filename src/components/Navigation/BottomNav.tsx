@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Scan, BookOpen, User } from "lucide-react";
+import { Scan, BookOpen, ShieldCheck, User } from "lucide-react";
 import type { AppTab } from "../../types";
 
 interface BottomNavProps {
@@ -10,6 +10,7 @@ interface BottomNavProps {
 const tabs: { id: AppTab; icon: typeof Scan; label: string }[] = [
   { id: 'mirror', icon: Scan, label: 'Mirror' },
   { id: 'journal', icon: BookOpen, label: 'Journal' },
+  { id: 'verify', icon: ShieldCheck, label: 'Verify' },
   { id: 'profile', icon: User, label: 'Profile' },
 ];
 

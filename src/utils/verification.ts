@@ -1,4 +1,5 @@
 import type { VerificationData } from "../types/procedures";
+import { isHederaReady, notarizePhoto } from "../services/hederaService";
 
 /**
  * Generate SHA-256 hash of image data for tamper verification
@@ -57,16 +58,65 @@ export async function verifyImage(
 }
 
 /**
+ * Create verification data AND notarize on Hedera if connected.
+ * Falls back gracefully to local-only verification if Hedera is not configured.
+ */
+export async function createAndNotarize(
+  imageData: string,
+  captureMethod: 'in-app' | 'upload-test',
+  procedureId: string
+): Promise<VerificationData> {
+  const verification = await createVerificationData(imageData, captureMethod);
+
+  if (isHederaReady()) {
+    try {
+      const result = await notarizePhoto({
+        procedureId,
+        photoHash: verification.hash,
+        timestamp: verification.timestamp,
+        captureMethod: verification.captureMethod,
+        deviceInfo: verification.deviceInfo,
+      });
+      verification.hedera = {
+        transactionId: result.transactionId,
+        consensusTimestamp: result.consensusTimestamp,
+        topicId: result.topicId,
+        topicSequenceNumber: result.topicSequenceNumber,
+      };
+    } catch (err) {
+      console.warn("Hedera notarization failed, continuing with local verification:", err);
+    }
+  }
+
+  return verification;
+}
+
+/**
  * Format verification data for display/export
  */
 export function formatVerificationForExport(verification: VerificationData): string {
-  return `
-Verification Certificate
-========================
-Hash (SHA-256): ${verification.hash}
-Capture Method: ${verification.captureMethod === 'in-app' ? 'Verified In-App Capture' : 'Test Upload (Not Verified)'}
-Timestamp: ${new Date(verification.timestamp).toLocaleString()}
-Timezone: ${verification.timezone}
-Device: ${verification.deviceInfo || 'Unknown'}
-`.trim();
+  const lines = [
+    `Verification Certificate`,
+    `========================`,
+    `Hash (SHA-256): ${verification.hash}`,
+    `Capture Method: ${verification.captureMethod === 'in-app' ? 'Verified In-App Capture' : 'Test Upload (Not Verified)'}`,
+    `Timestamp: ${new Date(verification.timestamp).toLocaleString()}`,
+    `Timezone: ${verification.timezone}`,
+    `Device: ${verification.deviceInfo || 'Unknown'}`,
+  ];
+
+  if (verification.hedera) {
+    lines.push(
+      ``,
+      `Blockchain Notarization`,
+      `-----------------------`,
+      `Network: Hedera Hashgraph`,
+      `Transaction ID: ${verification.hedera.transactionId}`,
+      `Consensus Timestamp: ${verification.hedera.consensusTimestamp}`,
+      `Topic ID: ${verification.hedera.topicId}`,
+      `Sequence #: ${verification.hedera.topicSequenceNumber}`,
+    );
+  }
+
+  return lines.join('\n');
 }

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Camera, History, List, Star, AlertTriangle, CheckCircle, ShieldCheck } from "lucide-react";
+import { Plus, Camera, History, List, Star, AlertTriangle, CheckCircle, ShieldCheck, Loader2, Link } from "lucide-react";
 import { VerifiedCapture } from "./VerifiedCapture";
 import { PrivacyEditor } from "./PrivacyEditor";
 import { AddProcedure } from "./AddProcedure";
 import { ProgressTimeline } from "./ProgressTimeline";
 import { saveToStorage, loadFromStorage } from "../../utils/storage";
-import { createVerificationData } from "../../utils/verification";
+import { createVerificationData, createAndNotarize } from "../../utils/verification";
 import type {
   Procedure,
   ProgressEntry,
@@ -53,6 +53,7 @@ export function ProcedureTracker({
   const [complicationSeverity, setComplicationSeverity] = useState<ComplicationSeverity>("none");
   const [complicationNotes, setComplicationNotes] = useState("");
   const [followedAftercare, setFollowedAftercare] = useState(true);
+  const [notarizing, setNotarizing] = useState(false);
 
   // Use external state if provided, otherwise internal localStorage
   const procedures = useExternal ? externalProcedures! : internalProcedures;
@@ -134,12 +135,28 @@ export function ProcedureTracker({
     setView("add-notes");
   };
 
-  // Handler for saving the progress entry
-  const handleSaveEntry = () => {
+  // Handler for saving the progress entry (with optional Hedera notarization)
+  const handleSaveEntry = async () => {
     if (!selectedProcedureId || !capturedImage || !protectedImage || !privacySettings) return;
 
     const procedure = procedures.find(p => p.id === selectedProcedureId);
     if (!procedure) return;
+
+    setNotarizing(true);
+
+    // Notarize on Hedera (if configured) before saving
+    let finalVerification = verificationData;
+    try {
+      finalVerification = await createAndNotarize(
+        capturedImage,
+        verificationData?.captureMethod || 'in-app',
+        selectedProcedureId
+      );
+    } catch (err) {
+      console.warn("Notarization step failed, saving with local verification:", err);
+    }
+
+    setNotarizing(false);
 
     const procedureDate = new Date(procedure.datePerformed);
     const now = new Date();
@@ -157,8 +174,8 @@ export function ProcedureTracker({
       daysSinceProcedure: daysSince,
       notes: entryNotes || undefined,
       rating: entryRating > 0 ? (entryRating as 1 | 2 | 3 | 4 | 5) : undefined,
-      verified: verificationData?.captureMethod === 'in-app',
-      verification: verificationData || undefined,
+      verified: finalVerification?.captureMethod === 'in-app',
+      verification: finalVerification || undefined,
       afterCare: {
         followedInstructions: followedAftercare
       },
@@ -229,7 +246,7 @@ export function ProcedureTracker({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#FF6FAE] to-[#FF5994] bg-clip-text text-transparent">
           Procedure Progress
         </h2>
         <p className="text-gray-600">Track your verified results</p>
@@ -246,7 +263,7 @@ export function ProcedureTracker({
             {/* Add Procedure Button */}
             <button
               onClick={() => setView("add-procedure")}
-              className="w-full mb-6 p-4 bg-gradient-to-r from-purple-500 to-rose-500 text-white rounded-2xl shadow-lg flex items-center justify-center gap-2 font-medium"
+              className="w-full mb-6 p-4 bg-gradient-to-r from-[#FF6FAE] to-[#FF5994] text-white rounded-2xl shadow-lg flex items-center justify-center gap-2 font-medium"
             >
               <Plus className="w-5 h-5" />
               Add New Procedure
@@ -310,11 +327,11 @@ export function ProcedureTracker({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm rounded-3xl border border-purple-100 overflow-hidden shadow-xl"
+            className="w-full max-w-md mx-auto bg-white/80 backdrop-blur-sm rounded-3xl border border-pink-100 overflow-hidden shadow-xl"
           >
             {/* Header */}
-            <div className="p-4 text-center border-b border-purple-100">
-              <h3 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent">
+            <div className="p-4 text-center border-b border-pink-100">
+              <h3 className="text-lg font-bold bg-gradient-to-r from-[#FF6FAE] to-[#FF5994] bg-clip-text text-transparent">
                 Add Details
               </h3>
               <p className="text-sm text-gray-600">Optional notes and rating</p>
@@ -331,13 +348,21 @@ export function ProcedureTracker({
                   />
                   {/* Verification badge */}
                   {verificationData && (
-                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs flex items-center gap-1 ${
-                      verificationData.captureMethod === 'in-app'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-amber-500 text-white'
-                    }`}>
-                      <ShieldCheck className="w-3 h-3" />
-                      {verificationData.captureMethod === 'in-app' ? 'Verified' : 'Test'}
+                    <div className="absolute top-2 right-2 flex flex-col gap-1">
+                      <div className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 ${
+                        verificationData.captureMethod === 'in-app'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-amber-500 text-white'
+                      }`}>
+                        <ShieldCheck className="w-3 h-3" />
+                        {verificationData.captureMethod === 'in-app' ? 'Verified' : 'Test'}
+                      </div>
+                      {verificationData.hedera && (
+                        <div className="px-2 py-1 rounded-full text-xs flex items-center gap-1 bg-blue-600 text-white">
+                          <Link className="w-3 h-3" />
+                          On-Chain
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -368,9 +393,9 @@ export function ProcedureTracker({
               </div>
 
               {/* Aftercare toggle */}
-              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-pink-50 rounded-xl">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-purple-600" />
+                  <CheckCircle className="w-5 h-5 text-[#FF6FAE]" />
                   <span className="font-medium">Followed aftercare instructions?</span>
                 </div>
                 <button
@@ -388,9 +413,9 @@ export function ProcedureTracker({
               </div>
 
               {/* Complication reporting */}
-              <div className="p-3 bg-purple-50 rounded-xl">
+              <div className="p-3 bg-pink-50 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-5 h-5 text-purple-600" />
+                  <AlertTriangle className="w-5 h-5 text-[#FF6FAE]" />
                   <span className="font-medium">Any complications?</span>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -435,13 +460,13 @@ export function ProcedureTracker({
                   onChange={(e) => setEntryNotes(e.target.value)}
                   placeholder="How does your skin feel? Any changes noticed?"
                   rows={3}
-                  className="w-full p-3 bg-purple-50 rounded-xl border-0 focus:ring-2 focus:ring-purple-500 resize-none"
+                  className="w-full p-3 bg-pink-50 rounded-xl border-0 focus:ring-2 focus:ring-pink-400 resize-none"
                 />
               </div>
             </div>
 
             {/* Actions */}
-            <div className="p-4 flex gap-3 border-t border-purple-100">
+            <div className="p-4 flex gap-3 border-t border-pink-100">
               <button
                 onClick={() => setView("privacy")}
                 className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-medium"
@@ -450,9 +475,20 @@ export function ProcedureTracker({
               </button>
               <button
                 onClick={handleSaveEntry}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-rose-500 text-white font-medium"
+                disabled={notarizing}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6FAE] to-[#FF5994] text-white font-medium flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Save Progress
+                {notarizing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Notarizing...
+                  </>
+                ) : (
+                  <>
+                    <Link className="w-4 h-4" />
+                    Save & Notarize
+                  </>
+                )}
               </button>
             </div>
           </motion.div>

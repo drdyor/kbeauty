@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import * as faceapi from "face-api.js";
+import { canvasRGBA } from "stackblur-canvas";
 import { Check, Loader2, Eye, EyeOff, Sparkles } from "lucide-react";
 import type { BlurSettings, PrivacySettings } from "../../types/procedures";
 
@@ -55,13 +56,20 @@ export function PrivacyEditor({ imageData, onComplete, onBack }: PrivacyEditorPr
       imageRef.current = img;
 
       try {
-        const result = await faceapi
-          .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        // Detect ALL faces, then pick the largest (closest/most prominent)
+        const results = await faceapi
+          .detectAllFaces(img, new faceapi.TinyFaceDetectorOptions())
           .withFaceLandmarks();
 
-        if (result) {
-          setLandmarks(result.landmarks);
-          setDetection(result.detection);
+        if (results.length > 0) {
+          // Pick the face with the largest bounding box area
+          const largest = results.reduce((best, curr) => {
+            const bestArea = best.detection.box.width * best.detection.box.height;
+            const currArea = curr.detection.box.width * curr.detection.box.height;
+            return currArea > bestArea ? curr : best;
+          });
+          setLandmarks(largest.landmarks);
+          setDetection(largest.detection);
           setFaceDetected(true);
         } else {
           setFaceDetected(false);
@@ -103,7 +111,7 @@ export function PrivacyEditor({ imageData, onComplete, onBack }: PrivacyEditorPr
 
     const blurRadius = blurSettings.blurStrength;
 
-    // Helper: create a blurred copy of the image
+    // Helper: create a blurred copy using StackBlur (pixel-level, works everywhere)
     const createBlurredCanvas = (strength: number): HTMLCanvasElement | null => {
       const temp = document.createElement("canvas");
       temp.width = canvas.width;
@@ -111,26 +119,9 @@ export function PrivacyEditor({ imageData, onComplete, onBack }: PrivacyEditorPr
       const tempCtx = temp.getContext("2d");
       if (!tempCtx) return null;
 
-      // Check if filter is supported
-      if (typeof tempCtx.filter !== "undefined") {
-        tempCtx.filter = `blur(${strength}px)`;
-        tempCtx.drawImage(img, 0, 0);
-      } else {
-        // Fallback: scale down then up (box blur approximation)
-        const scale = Math.max(1, strength / 2);
-        const sw = Math.max(1, Math.floor(canvas.width / scale));
-        const sh = Math.max(1, Math.floor(canvas.height / scale));
-        const micro = document.createElement("canvas");
-        micro.width = sw;
-        micro.height = sh;
-        const microCtx = micro.getContext("2d");
-        if (microCtx) {
-          microCtx.drawImage(img, 0, 0, sw, sh);
-          tempCtx.imageSmoothingEnabled = true;
-          tempCtx.imageSmoothingQuality = "high";
-          tempCtx.drawImage(micro, 0, 0, sw, sh, 0, 0, canvas.width, canvas.height);
-        }
-      }
+      tempCtx.drawImage(img, 0, 0);
+      const radius = Math.max(1, Math.min(Math.round(strength), 180));
+      canvasRGBA(temp, 0, 0, temp.width, temp.height, radius);
       return temp;
     };
 
@@ -138,7 +129,6 @@ export function PrivacyEditor({ imageData, onComplete, onBack }: PrivacyEditorPr
       const box = detection.box;
       const leftEye = landmarks.getLeftEye();
       const rightEye = landmarks.getRightEye();
-      const jawline = landmarks.getJawOutline();
 
       const leftEyeCenter = {
         x: leftEye.reduce((sum, p) => sum + p.x, 0) / leftEye.length,
@@ -149,58 +139,75 @@ export function PrivacyEditor({ imageData, onComplete, onBack }: PrivacyEditorPr
         y: rightEye.reduce((sum, p) => sum + p.y, 0) / rightEye.length
       };
 
-      // Eye blur region - generous size to actually cover the eye area
       const eyeDistance = Math.abs(rightEyeCenter.x - leftEyeCenter.x);
-      const eyeWidth = eyeDistance * 0.55;
-      const eyeHeight = eyeWidth * 0.7;
+      const cx = box.x + box.width / 2;
+      const cy = box.y + box.height / 2;
 
-      // Background blur (everything outside face)
+      // Eyebrow positions for face/hair boundary
+      const leftBrow = landmarks.getLeftEyeBrow();
+      const rightBrow = landmarks.getRightEyeBrow();
+      const browTop = Math.min(
+        ...leftBrow.map(p => p.y),
+        ...rightBrow.map(p => p.y)
+      );
+
+      // Face ellipse: from just above eyebrows to chin
+      const faceTop = browTop - eyeDistance * 0.15;
+      const faceCy = (faceTop + box.y + box.height) / 2;
+      const faceRx = box.width * 0.55;
+      const faceRy = (box.y + box.height - faceTop) / 2;
+
+      // Head+hair ellipse: generous, shifted up for hair above head
+      const headCy = cy - box.height * 0.2;
+      const headRx = box.width * 0.95;
+      const headRy = box.height * 0.9;
+
+      // 1. Background blur (everything outside the subject)
       if (blurSettings.blurBackground) {
         const blurred = createBlurredCanvas(blurRadius);
         if (blurred) {
-          // Draw full blurred image
           ctx.drawImage(blurred, 0, 0);
 
-          // Cut out face area (restore sharp face)
+          // Restore sharp subject area
           ctx.save();
           ctx.beginPath();
-          const topOfHead = box.y - box.height * 0.3;
-          ctx.moveTo(jawline[0].x, jawline[0].y);
-          jawline.forEach(p => ctx.lineTo(p.x, p.y));
-          ctx.lineTo(box.x + box.width, topOfHead);
-          ctx.lineTo(box.x, topOfHead);
-          ctx.closePath();
+          if (blurSettings.blurHair) {
+            // Tight: just the face (hair gets blurred separately)
+            ctx.ellipse(cx, faceCy, faceRx, faceRy, 0, 0, Math.PI * 2);
+          } else {
+            // Generous: face + hair
+            ctx.ellipse(cx, headCy, headRx, headRy, 0, 0, Math.PI * 2);
+          }
           ctx.clip();
           ctx.drawImage(img, 0, 0);
           ctx.restore();
         }
       }
 
-      // Hair blur (top of head)
+      // 2. Hair blur - full-width band around head minus face (catches long hair)
       if (blurSettings.blurHair) {
-        const hairTop = Math.max(0, box.y - box.height * 0.5);
-        const hairBottom = box.y + box.height * 0.15;
-        const hairCenterX = box.x + box.width / 2;
-        const hairRadiusX = box.width * 0.6;
-        const hairRadiusY = (hairBottom - hairTop) / 2;
-        const hairCenterY = hairTop + hairRadiusY;
-
         const blurred = createBlurredCanvas(blurRadius);
         if (blurred) {
           ctx.save();
           ctx.beginPath();
-          ctx.ellipse(hairCenterX, hairCenterY, hairRadiusX, hairRadiusY, 0, 0, Math.PI * 2);
-          ctx.clip();
+          // Outer: full-width band from above head to well below chin
+          const hairTop = Math.max(0, box.y - box.height * 0.7);
+          const hairBottom = Math.min(canvas.height, box.y + box.height * 1.8);
+          ctx.rect(0, hairTop, canvas.width, hairBottom - hairTop);
+          // Inner: face ellipse cutout (keeps face sharp)
+          ctx.ellipse(cx, faceCy, faceRx, faceRy, 0, 0, Math.PI * 2);
+          ctx.clip("evenodd");
           ctx.drawImage(blurred, 0, 0);
           ctx.restore();
         }
       }
 
-      // Eye blur - drawn LAST so it's always on top
+      // 3. Eye blur - drawn LAST so it's always on top
       if (blurSettings.blurEyes) {
+        const eyeWidth = eyeDistance * 0.35;
+        const eyeHeight = eyeDistance * 0.18;
         const blurred = createBlurredCanvas(blurRadius * 1.5);
         if (blurred) {
-          // Left eye
           ctx.save();
           ctx.beginPath();
           ctx.ellipse(leftEyeCenter.x, leftEyeCenter.y, eyeWidth, eyeHeight, 0, 0, Math.PI * 2);
@@ -208,7 +215,6 @@ export function PrivacyEditor({ imageData, onComplete, onBack }: PrivacyEditorPr
           ctx.drawImage(blurred, 0, 0);
           ctx.restore();
 
-          // Right eye
           ctx.save();
           ctx.beginPath();
           ctx.ellipse(rightEyeCenter.x, rightEyeCenter.y, eyeWidth, eyeHeight, 0, 0, Math.PI * 2);

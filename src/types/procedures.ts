@@ -57,6 +57,13 @@ export interface VerificationData {
   deviceInfo?: string;
   timestamp: string; // ISO string
   timezone: string;
+  // Hedera blockchain notarization
+  hedera?: {
+    transactionId: string;
+    consensusTimestamp: string;
+    topicId: string;
+    topicSequenceNumber: number;
+  };
 }
 
 export interface ProgressEntry {

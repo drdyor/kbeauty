@@ -38,7 +38,7 @@ export interface DailyCheckIn {
 }
 
 // ---- App Navigation ----
-export type AppTab = 'mirror' | 'journal' | 'profile';
+export type AppTab = 'mirror' | 'journal' | 'verify' | 'profile';
 
 // ---- Skin Journal (daily checks without procedure) ----
 export type SkinConcernTag =

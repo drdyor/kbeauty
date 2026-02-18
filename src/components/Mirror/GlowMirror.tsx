@@ -1,12 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import * as faceapi from "face-api.js";
-import { Check, RotateCcw, Grid3x3, Upload, Zap, ZapOff, Shield } from "lucide-react";
+import { Check, RotateCcw, Grid3x3, Crosshair, Upload, Zap, ZapOff, Shield } from "lucide-react";
 import { FaceGuideOverlay } from "./FaceGuideOverlay";
 import { SkinZoneOverlay } from "./SkinZoneOverlay";
 import { LightingIndicator } from "./LightingIndicator";
 import { CaptureControls } from "./CaptureControls";
 import { GlowchiCompanion } from "./GlowchiCompanion";
+import { ClinicalGridOverlay } from "./ClinicalGridOverlay";
 import { SkinJournalDetails } from "../Journal/SkinJournalDetails";
 import { PrivacyEditor } from "../Procedures/PrivacyEditor";
 import { ProcedureTracker } from "../Procedures";
@@ -53,6 +54,7 @@ export function GlowMirror({
   const [error, setError] = useState<string | null>(null);
   const [showFlash, setShowFlash] = useState(false);
   const [showZones, setShowZones] = useState(false);
+  const [showClinicalGrid, setShowClinicalGrid] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [faceBox, setFaceBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -454,6 +456,13 @@ export function GlowMirror({
                 videoHeight={videoSize.height}
               />
 
+              {/* Clinical grid */}
+              <ClinicalGridOverlay
+                visible={showClinicalGrid}
+                containerWidth={containerSize.width}
+                containerHeight={containerSize.height}
+              />
+
               {/* Top bar */}
               <div className="absolute top-0 left-0 right-0 pt-12 px-4 flex items-start justify-between">
                 <div className="flex flex-col gap-2">
@@ -490,6 +499,16 @@ export function GlowMirror({
                     }`}
                   >
                     <Grid3x3 className="w-4 h-4 text-white" />
+                  </button>
+
+                  {/* Clinical grid toggle */}
+                  <button
+                    onClick={() => setShowClinicalGrid(!showClinicalGrid)}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md transition-colors ${
+                      showClinicalGrid ? "bg-[#4FC3F7]/30 border border-[#4FC3F7]/50" : "bg-black/30"
+                    }`}
+                  >
+                    <Crosshair className="w-4 h-4 text-white" />
                   </button>
 
                   {/* Upload */}

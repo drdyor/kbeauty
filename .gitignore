@@ -49,5 +49,9 @@ yarn-error.log*
 *.temp
 .cache/
 
-# Large binary/media folders (review before removing from gitignore)
-# koreanbeauty/Wan2.2/  # AI model weights - consider if needed
+# Large binary/media folders
+koreanbeauty/
+.aider*
+
+# Scratch files
+*.ini

@@ -21,3 +21,12 @@ export {
   DEFAULT_PRIVACY_CONFIG,
 } from "./privacy";
 export type { BlurRegion, PrivacyConfig } from "./privacy";
+export { LivenessDetector } from "./liveness";
+export type {
+  LivenessState,
+  LivenessChallenge,
+  LivenessConfig,
+  LivenessFaceResult,
+} from "./liveness";
+export { NativeDetector } from "./native-detector";
+export type { MLKitFace } from "./native-detector";

@@ -28,11 +28,14 @@
     "plugins": [
       "expo-router",
       [
-        "expo-camera",
+        "react-native-vision-camera",
         {
-          "cameraPermission": "Glow Pro needs camera access for certified medical photography."
+          "cameraPermissionText": "Glow Pro needs camera access for certified medical photography.",
+          "enableMicrophonePermission": false,
+          "enableLocationPermission": false
         }
-      ]
+      ],
+      "react-native-reanimated/plugin"
     ]
   }
 }

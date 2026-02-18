@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Glow",
+    "slug": "glow-patient",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "glow",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.glowprotocol.patient"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.glowprotocol.patient"
+    },
+    "plugins": ["expo-router"]
+  }
+}
